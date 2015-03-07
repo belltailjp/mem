@@ -39,6 +39,7 @@ status = None
 
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('--interval', '-i', type=int, default=100, help = "Interval of process check look in milliseconds")
     parser.add_argument('sub_command', nargs='*')
     args = parser.parse_args()
     sub_command = args.sub_command
@@ -51,6 +52,6 @@ if __name__=="__main__":
     while proc.poll() != 0:
         with open(proc_path, 'r') as f:
             status = dict([tuple(line.split(':')) for line in f.read().splitlines()])
-        time.sleep(0.1)
+        time.sleep(args.interval / 1000.0)
 
     print_report()
