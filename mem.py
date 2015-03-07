@@ -5,6 +5,15 @@ import time
 import argparse
 import subprocess
 
+def make_readable(size_str):
+    # size_str should be like "  1077992 kB"
+    (size, kB) = tuple(size_str.strip().split(' '))
+    size = float(size)
+    return  ("%.1fkB" % size) if size < 1024 else\
+            ("%.1fMB" % (size / 1024)) if size < 1024**2 else\
+            ("%.1fGB" % (size / 1024**2)) if size < 1024**2 else\
+            ("%.1fTB" % (size / 1024**3))
+
 if __name__=="__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('sub_command', nargs='*')
@@ -15,8 +24,8 @@ if __name__=="__main__":
     status = dict()
     while proc.poll() != 0:
         with open(proc_path, 'r') as f:
-            status = dict([tuple(line.rstrip().split(':')) for line in f.readlines()])
+            status = dict([tuple(line.split(':')) for line in f.read().splitlines()])
         time.sleep(0.1)
 
-    print('VmPeak', status['VmPeak'])
-    print('VmSize', status['VmSize'])
+    print('VmPeak', make_readable(status['VmPeak']))
+    print('VmSize', make_readable(status['VmSize']))
