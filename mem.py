@@ -5,6 +5,13 @@ import time
 import argparse
 import subprocess
 
+def print_report(sub_command, status):
+    print("%(command)s  VmPeak: %(VmPeak)s  VmHWM: %(VmHWM)s" % {
+            'command' : ' '.join(sub_command),
+            'VmPeak' : make_readable(status['VmPeak']),
+            'VmHWM' : make_readable(status['VmHWM'])
+          })
+
 def make_readable(size_str):
     # size_str should be like "  1077992 kB"
     (size, kB) = tuple(size_str.strip().split(' '))
@@ -27,5 +34,4 @@ if __name__=="__main__":
             status = dict([tuple(line.split(':')) for line in f.read().splitlines()])
         time.sleep(0.1)
 
-    print('VmPeak', make_readable(status['VmPeak']))
-    print('VmSize', make_readable(status['VmSize']))
+    print_report(args.sub_command, status)
