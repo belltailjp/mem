@@ -23,13 +23,13 @@ def print_report(signalnum = None, stackframe = None):
     if proc.returncode != 0:
         print('Command exited with non-zero status %d' % proc.returncode)
 
-    times = os.times()
+    (user, system, children_user, children_system, elapsed) = os.times()
     print("%(command)s  VmPeak: %(VmPeak)s  VmHWM: %(VmHWM)s  user: %(user).2fs  system: %(system).2fs  total: %(total).2fs" % {
             'command' : ' '.join(sub_command),
             'VmPeak' : make_readable(status['VmPeak']),
             'VmHWM' : make_readable(status['VmHWM']),
-            'user' : times.children_user,
-            'system' : times.children_system,
+            'user' : children_user,
+            'system' : children_system,
             'total' : time.time() - begin_time
           })
 
@@ -55,25 +55,31 @@ status = None
 
 if __name__=="__main__":
     args = build_argparse().parse_args()
-    sub_command = args.sub_command
+    sub_command = args.sub_command if len(args.sub_command) != 1 else args.sub_command[0].split(' ')
 
     signal.signal(signal.SIGINT, print_report)
     signal.signal(signal.SIGTERM, print_report)
 
-    proc = subprocess.Popen(args.sub_command)
+    proc = subprocess.Popen(sub_command)
     proc_path = "/proc/" + str(proc.pid) + "/status"
 
     watch_file = open(args.watch, 'w') if args.watch is not None else None
     begin_time = time.time()
+    if watch_file is not None:
+        watch_file.write('#gnuplot\n')
+        watch_file.write('#> plot "%(fn)s" using 1:2 w l t "VmSize", "%(fn)s" using 1:3 w l t "VmRSS"\n' % {'fn' : args.watch})
+        watch_file.write('#time(sec) VmSize VmRSS(resident)\n')
 
     while proc.poll() != 0:
         with open(proc_path, 'r') as f:
             status = dict([tuple(line.split(':')) for line in f.read().splitlines()])
             if watch_file is not None:
-                watch_file.write("%(elapsed_sec)f %(VmHWM)d\n" % {
+                watch_file.write("%(elapsed_sec)f %(VmSize)d %(VmRSS)d\n" % {
                     'elapsed_sec': time.time() - begin_time,
-                    'VmHWM': size_to_int(status['VmHWM'])
+                    'VmSize': size_to_int(status['VmSize']),
+                    'VmRSS': size_to_int(status['VmRSS'])
                     })
+                watch_file.flush()
         time.sleep(args.interval / 1000.0)
 
     print_report()
