@@ -23,10 +23,14 @@ def print_report(signalnum = None, stackframe = None):
     if proc.returncode != 0:
         print('Command exited with non-zero status %d' % proc.returncode)
 
-    print("%(command)s  VmPeak: %(VmPeak)s  VmHWM: %(VmHWM)s" % {
+    times = os.times()
+    print("%(command)s  VmPeak: %(VmPeak)s  VmHWM: %(VmHWM)s  user: %(user).2fs  system: %(system).2fs  total: %(total).2fs" % {
             'command' : ' '.join(sub_command),
             'VmPeak' : make_readable(status['VmPeak']),
-            'VmHWM' : make_readable(status['VmHWM'])
+            'VmHWM' : make_readable(status['VmHWM']),
+            'user' : times.children_user,
+            'system' : times.children_system,
+            'total' : time.time() - begin_time
           })
 
     exit(proc.returncode)
@@ -44,6 +48,7 @@ def size_to_int(size_str):
     # size_str should be like "  1077992 kB"
     return int(size_str.strip().split(' ')[0])
 
+begin_time = None
 proc = None
 sub_command = None
 status = None
