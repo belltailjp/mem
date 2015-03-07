@@ -1,18 +1,28 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
 import signal
 import time
 import argparse
 import subprocess
 
 def print_report(signalnum = None, stackframe = None):
+    if not signalnum is None:
+        print()
+        os.kill(proc.pid, signalnum)
+        proc.poll()
+
+    if proc.returncode != 0:
+        print('Command exited with non-zero status %d' % proc.returncode)
+
     print("%(command)s  VmPeak: %(VmPeak)s  VmHWM: %(VmHWM)s" % {
             'command' : ' '.join(sub_command),
             'VmPeak' : make_readable(status['VmPeak']),
             'VmHWM' : make_readable(status['VmHWM'])
           })
-    exit(0)
+
+    exit(proc.returncode)
 
 def make_readable(size_str):
     # size_str should be like "  1077992 kB"
