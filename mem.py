@@ -41,7 +41,7 @@ def make_readable(size_str):
     size = float(size)
     return  ("%.1fkB" % size) if size < 1024 else\
             ("%.1fMB" % (size / 1024)) if size < 1024**2 else\
-            ("%.1fGB" % (size / 1024**2)) if size < 1024**2 else\
+            ("%.1fGB" % (size / 1024**2)) if size < 1024**3 else\
             ("%.1fTB" % (size / 1024**3))
 
 def size_to_int(size_str):
