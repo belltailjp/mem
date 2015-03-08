@@ -18,9 +18,8 @@ def print_report(signalnum = None, stackframe = None):
     if not signalnum is None:
         print()
         os.kill(proc.pid, signalnum)
-        proc.poll()
 
-    if proc.returncode != 0:
+    if proc.poll() is not None and proc.returncode != 0:
         print('Command exited with non-zero status %d' % proc.returncode)
 
     (user, system, children_user, children_system, elapsed) = os.times()
@@ -70,7 +69,7 @@ if __name__=="__main__":
         watch_file.write('#> plot "%(fn)s" using 1:2 w l t "VmSize", "%(fn)s" using 1:3 w l t "VmRSS"\n' % {'fn' : args.watch})
         watch_file.write('#time(sec) VmSize VmRSS(resident)\n')
 
-    while proc.poll() != 0:
+    while proc.poll() is None:
         with open(proc_path, 'r') as f:
             status = dict([tuple(line.split(':')) for line in f.read().splitlines()])
             if watch_file is not None:
