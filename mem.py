@@ -2,17 +2,11 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 import signal
 import time
 import argparse
 import subprocess
-
-def build_argparse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--interval', '-i', type=int, default=100, help = "Interval of process check look in milliseconds")
-    parser.add_argument('--watch', '-w', type=str, metavar = "FILENAME", help = "Watch memory usage and export to a file with gnuplot format")
-    parser.add_argument('sub_command', nargs='*')
-    return parser
 
 def print_report(signalnum = None, stackframe = None):
     if not signalnum is None:
@@ -52,9 +46,47 @@ proc = None
 sub_command = None
 status = None
 
+class PartialArgumentParser(argparse.ArgumentParser):
+    def __custom_error(self, message):
+        raise SystemExit()
+
+    def __custom_exit(self, status = 0, message = None):
+        raise SystemExit()
+
+    def __validate(self, argv):
+        error_func, self.error = self.error, self.__custom_error
+
+        valid = True
+        try:
+            self.parse_args(argv)
+
+        except SystemExit:
+            valid = False
+
+        self.error = error_func
+        return valid
+
+    def best_known_args(self, argv = sys.argv[1:]):
+        exit_func, self.exit = self.exit, self.__custom_exit
+        _argv = argv
+        while 0 <= len(_argv):
+            if self.__validate(_argv):
+                self.exit = exit_func
+                return (self.parse_args(_argv), argv[len(_argv):])
+            _argv = _argv[:-1]
+            
+        self.exit = exit_func
+        print('Argument Error!!')
+
+def build_argparse():
+    parser = PartialArgumentParser()
+    parser.add_argument('--interval', '-i', type=int, default=100, help = "Interval of process check look in milliseconds")
+    parser.add_argument('--watch', '-w', type=str, metavar = "FILENAME", help = "Watch memory usage and export to a file with gnuplot format")
+    return parser
+
+
 if __name__=="__main__":
-    args = build_argparse().parse_args()
-    sub_command = args.sub_command if len(args.sub_command) != 1 else args.sub_command[0].split(' ')
+    (args, sub_command) = build_argparse().best_known_args()
 
     signal.signal(signal.SIGINT, print_report)
     signal.signal(signal.SIGTERM, print_report)
