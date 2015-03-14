@@ -91,8 +91,13 @@ if __name__=="__main__":
     signal.signal(signal.SIGINT, print_report)
     signal.signal(signal.SIGTERM, print_report)
 
-    proc = subprocess.Popen(sub_command)
-    proc_path = "/proc/" + str(proc.pid) + "/status"
+    try:
+        proc = subprocess.Popen(sub_command)
+        proc_path = "/proc/" + str(proc.pid) + "/status"
+
+    except OSError as e:
+        print(sys.argv[0] + ': cannot run ' + sub_command[0] + ': ' + e.strerror)
+        exit(1)
 
     watch_file = open(args.watch, 'w') if args.watch is not None else None
     begin_time = time.time()
